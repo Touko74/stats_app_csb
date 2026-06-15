@@ -3,7 +3,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Login from './pages/Login'
 import CreerEquipe from './pages/CreerEquipe'
 import Layout from './components/layout'
-import AcceptInvitation from './pages/AcceptInvitation'
+import AcceptInvitation from './pages/Acceptinvitation'
 
 function App() {
   return (
