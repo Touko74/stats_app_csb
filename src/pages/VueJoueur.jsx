@@ -91,7 +91,7 @@ export default function VueJoueur() {
     const { data: j } = await supabase
       .from('joueur')
       .select('*, equipe(nom)')
-      .eq('email', user.email)
+      .ilike('email', user.email)
       .single()
 
     if (!j) { setLoading(false); return }
