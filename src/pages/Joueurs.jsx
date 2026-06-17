@@ -49,6 +49,19 @@ const inputStyle = {
   boxSizing: 'border-box', outline: 'none',
 }
 
+// Hook simple pour détecter mobile et réagir au resize
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  )
+  useEffect(() => {
+    function handleResize() { setIsMobile(window.innerWidth < 768) }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+  return isMobile
+}
+
 export default function Joueurs() {
   const [joueurs, setJoueurs] = useState([])
   const [equipeId, setEquipeId] = useState(null)
@@ -65,6 +78,8 @@ export default function Joueurs() {
   const [inviting, setInviting] = useState(false)
   const [inviteError, setInviteError] = useState('')
   const [inviteSuccess, setInviteSuccess] = useState(false)
+
+  const isMobile = useIsMobile()
 
   useEffect(() => { fetchData() }, [])
 
@@ -139,16 +154,23 @@ export default function Joueurs() {
   const postes = [...new Set(joueurs.map(j => j.poste).filter(Boolean))]
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, padding: '2rem 1.5rem' }}>
+    <div style={{ minHeight: '100vh', background: C.bg, padding: isMobile ? '1.25rem 1rem' : '2rem 1.5rem' }}>
       <div style={{ maxWidth: 900, margin: '0 auto' }}>
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '2rem' }}>
+        <div style={{
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: isMobile ? 'stretch' : 'flex-end',
+          justifyContent: 'space-between',
+          gap: isMobile ? 12 : 0,
+          marginBottom: '2rem',
+        }}>
           <div>
             <div style={{ fontSize: 10, letterSpacing: '0.15em', color: C.gold, textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>
               Gestion de l'effectif
             </div>
-            <h1 style={{ fontSize: 28, fontWeight: 800, color: C.white, margin: 0, letterSpacing: '-0.02em' }}>Effectif</h1>
+            <h1 style={{ fontSize: isMobile ? 22 : 28, fontWeight: 800, color: C.white, margin: 0, letterSpacing: '-0.02em' }}>Effectif</h1>
             <p style={{ fontSize: 12, color: C.muted, margin: '4px 0 0' }}>
               {joueurs.length} joueur{joueurs.length !== 1 ? 's' : ''} enregistré{joueurs.length !== 1 ? 's' : ''}
             </p>
@@ -158,6 +180,7 @@ export default function Joueurs() {
             borderRadius: 10, padding: '10px 18px', fontSize: 13,
             fontWeight: 700, cursor: 'pointer', letterSpacing: '0.01em',
             boxShadow: '0 4px 16px rgba(224,201,106,0.25)',
+            width: isMobile ? '100%' : 'auto',
           }}>
             + Ajouter un joueur
           </button>
@@ -174,21 +197,25 @@ export default function Joueurs() {
           ].map(s => (
             <div key={s.label} style={{
               background: 'rgba(27,46,107,0.4)', borderRadius: 12,
-              border: `1px solid ${C.border}`, padding: '14px 18px',
+              border: `1px solid ${C.border}`, padding: isMobile ? '10px 12px' : '14px 18px',
             }}>
-              <div style={{ fontSize: 26, fontWeight: 800, color: C.gold, letterSpacing: '-0.02em' }}>{s.value}</div>
+              <div style={{ fontSize: isMobile ? 20 : 26, fontWeight: 800, color: C.gold, letterSpacing: '-0.02em' }}>{s.value}</div>
               <div style={{ fontSize: 11, color: C.muted, marginTop: 3, letterSpacing: '0.03em' }}>{s.label}</div>
             </div>
           ))}
         </div>
 
-        {/* Tableau */}
+        {/* Tableau / Cartes */}
         <div style={{
           background: 'rgba(27,46,107,0.35)', borderRadius: 14,
           border: `1px solid ${C.border}`, overflow: 'hidden'
         }}>
           <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            alignItems: isMobile ? 'stretch' : 'center',
+            justifyContent: 'space-between',
+            gap: isMobile ? 10 : 0,
             padding: '14px 18px', borderBottom: `1px solid ${C.border}`
           }}>
             <span style={{ fontSize: 13, fontWeight: 600, color: C.white }}>Liste des joueurs</span>
@@ -200,7 +227,8 @@ export default function Joueurs() {
                 background: 'rgba(15,28,63,0.8)',
                 border: `1px solid rgba(224,201,106,0.2)`,
                 borderRadius: 8, padding: '6px 12px', fontSize: 12,
-                color: C.white, width: 180, outline: 'none',
+                color: C.white, width: isMobile ? '100%' : 180, outline: 'none',
+                boxSizing: 'border-box',
               }}
             />
           </div>
@@ -214,7 +242,84 @@ export default function Joueurs() {
                 {search ? 'Aucun joueur trouvé.' : 'Aucun joueur. Commencez par en ajouter un !'}
               </p>
             </div>
+          ) : isMobile ? (
+            // ---- VUE MOBILE : CARTES ----
+            <div style={{ padding: '8px' }}>
+              {filtered.map((j, i) => {
+                const av = avatarColor(i)
+                const ps = POSTE_STYLE[j.poste] || { bg: 'rgba(255,255,255,0.08)', color: C.muted }
+                return (
+                  <div key={j.id} style={{
+                    background: 'rgba(15,28,63,0.6)', borderRadius: 12,
+                    border: `1px solid ${C.border}`, padding: '12px 14px',
+                    marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    gap: 8,
+                  }}>
+                    {/* Gauche : avatar + infos */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                      <div style={{
+                        width: 38, height: 38, borderRadius: '50%',
+                        background: av.bg, color: av.color,
+                        border: `1px solid ${av.color}40`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 11, fontWeight: 800, flexShrink: 0,
+                      }}>
+                        {initiales(j.nom, j.prenom)}
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{
+                          fontWeight: 700, color: C.white, fontSize: 13,
+                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        }}>
+                          {j.prenom} {j.nom}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
+                          <span style={{
+                            background: 'rgba(224,201,106,0.12)', border: '1px solid rgba(224,201,106,0.25)',
+                            color: C.gold, borderRadius: 5, padding: '1px 7px', fontSize: 11, fontWeight: 800,
+                          }}>#{j.numero_maillot}</span>
+                          <span style={{
+                            background: ps.bg, color: ps.color,
+                            borderRadius: 5, padding: '1px 7px', fontSize: 10, fontWeight: 600,
+                          }}>{j.poste}</span>
+                          {j.email ? (
+                            <span style={{ fontSize: 10, color: '#4ADE80' }}>● Invité</span>
+                          ) : (
+                            <span style={{ fontSize: 10, color: C.muted }}>● Non invité</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Droite : actions */}
+                    <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                      {!j.email && (
+                        <button onClick={() => { setInviteModal(j); setInviteEmail(''); setInviteError(''); setInviteSuccess(false) }} style={{
+                          width: 32, height: 32, borderRadius: 7,
+                          border: `1px solid rgba(224,201,106,0.3)`,
+                          background: 'rgba(224,201,106,0.1)',
+                          cursor: 'pointer', fontSize: 14,
+                        }}>✉️</button>
+                      )}
+                      <button onClick={() => openEdit(j)} style={{
+                        width: 32, height: 32, borderRadius: 7,
+                        border: `1px solid rgba(224,201,106,0.2)`,
+                        background: 'rgba(224,201,106,0.07)',
+                        cursor: 'pointer', fontSize: 14,
+                      }}>✏️</button>
+                      <button onClick={() => setDeleteConfirm(j)} style={{
+                        width: 32, height: 32, borderRadius: 7,
+                        border: '1px solid rgba(248,113,113,0.2)',
+                        background: 'rgba(248,113,113,0.07)',
+                        cursor: 'pointer', fontSize: 14,
+                      }}>🗑</button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           ) : (
+            // ---- VUE DESKTOP : TABLE ----
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, tableLayout: 'fixed' }}>
               <thead>
                 <tr style={{ borderBottom: `1px solid ${C.border}` }}>
@@ -295,7 +400,7 @@ export default function Joueurs() {
                               width: 30, height: 30, borderRadius: 7,
                               border: `1px solid rgba(224,201,106,0.3)`,
                               background: 'rgba(224,201,106,0.1)',
-                              cursor: 'pointer', fontSize: 13, title: 'Inviter'
+                              cursor: 'pointer', fontSize: 13,
                             }}>✉️</button>
                           )}
                           <button onClick={() => openEdit(j)} style={{
