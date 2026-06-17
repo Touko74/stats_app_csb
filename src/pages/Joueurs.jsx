@@ -104,26 +104,46 @@ export default function Joueurs() {
   }
   function closeModal() { setShowModal(false); setEditId(null); setError('') }
 
+  async function handleSave() {
+    if (!form.nom.trim() || !form.prenom.trim() || !form.numero_maillot) {
+      setError('Tous les champs sont obligatoires.'); return
+    }
+    setSaving(true); setError('')
+    if (editId) {
+      const { error: err } = await supabase.from('joueur')
+        .update({ ...form, numero_maillot: Number(form.numero_maillot) }).eq('id', editId)
+      if (err) { setError('Erreur lors de la modification.'); setSaving(false); return }
+    } else {
+      const { error: err } = await supabase.from('joueur')
+        .insert([{ ...form, numero_maillot: Number(form.numero_maillot), equipe_id: equipeId }])
+      if (err) { setError("Erreur lors de l'ajout."); setSaving(false); return }
+    }
+    setSaving(false); setShowModal(false); fetchData()
+  }
+
+  async function handleDelete(id) {
+    await supabase.from('joueur').delete().eq('id', id)
+    setDeleteConfirm(null); fetchData()
+  }
+
   async function handleInviter() {
-  if (!inviteEmail.trim()) { setInviteError('Email obligatoire.'); return }
-  setInviting(true); setInviteError('')
+    if (!inviteEmail.trim()) { setInviteError('Email obligatoire.'); return }
+    setInviting(true); setInviteError('')
 
-  const emailNormalise = inviteEmail.trim().toLowerCase() // ← normalisation
+    const { error: invErr } = await supabase.functions.invoke('invite-user', {
+      body: { email: inviteEmail, joueur_id: inviteModal.id }
+    })
 
-  const { error: invErr } = await supabase.functions.invoke('invite-user', {
-    body: { email: emailNormalise, joueur_id: inviteModal.id }
-  })
+    if (invErr) { setInviteError("Erreur lors de l'invitation."); setInviting(false); return }
 
-  if (invErr) { setInviteError("Erreur lors de l'invitation."); setInviting(false); return }
+    await supabase.from('joueur').update({ email: inviteEmail }).eq('id', inviteModal.id)
 
-  await supabase.from('joueur').update({ email: emailNormalise }).eq('id', inviteModal.id)
-
-  setInviting(false)
-  setInviteSuccess(true)
-  setTimeout(() => {
-    setInviteModal(null); setInviteEmail(''); setInviteSuccess(false); fetchData()
-  }, 2000)
-}
+    setInviting(false)
+    setInviteSuccess(true)
+    setTimeout(() => {
+      setInviteModal(null); setInviteEmail(''); setInviteSuccess(false); fetchData()
+    }, 2000)
+  }
 
   const filtered = joueurs.filter(j =>
     `${j.nom} ${j.prenom}`.toLowerCase().includes(search.toLowerCase()) ||
