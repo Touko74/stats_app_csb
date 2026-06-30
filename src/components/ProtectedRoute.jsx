@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 
+const ADMIN_EMAIL = 'sanamatouko@gmail.com'
+
 function ProtectedRoute({ children }) {
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
@@ -10,6 +12,12 @@ function ProtectedRoute({ children }) {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) {
         navigate('/')
+        return
+      }
+
+      // Si c'est l'admin, on laisse passer directement
+      if (session.user.email === ADMIN_EMAIL) {
+        setLoading(false)
         return
       }
 
