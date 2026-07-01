@@ -15,23 +15,18 @@ function ProtectedRoute({ children }) {
         return
       }
 
-      // Si c'est l'admin, on laisse passer directement
+      // Admin → redirection directe vers /admin
       if (session.user.email === ADMIN_EMAIL) {
+        navigate('/admin')
         setLoading(false)
         return
       }
 
       const { data: equipe } = await supabase
-        .from('equipe')
-        .select('id')
-        .eq('user_id', session.user.id)
-        .maybeSingle()
+        .from('equipe').select('id').eq('user_id', session.user.id).maybeSingle()
 
       const { data: joueur } = await supabase
-        .from('joueur')
-        .select('id')
-        .eq('email', session.user.email)
-        .maybeSingle()
+        .from('joueur').select('id').eq('email', session.user.email).maybeSingle()
 
       if (joueur && window.location.pathname !== '/mon-profil') {
         navigate('/mon-profil')
