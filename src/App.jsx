@@ -5,6 +5,7 @@ import CreerEquipe from './pages/CreerEquipe'
 import Layout from './components/layout'
 import AcceptInvitation from './pages/Acceptinvitation'
 import AdminDashboard from './pages/AdminDashboard'
+import ResetPassword from './pages/ResetPassword'
 
 function App() {
   return (
@@ -18,7 +19,7 @@ function App() {
         <Route path="/admin" element={
           <ProtectedRoute><AdminDashboard /></ProtectedRoute>
         } />
-        {/* /* doit être EN DERNIER */}
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/*" element={
           <ProtectedRoute><Layout /></ProtectedRoute>
         } />
